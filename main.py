@@ -91,25 +91,11 @@ import numpy as np
 #     main()
 
 
-from environment import SimpleEnvironment
+from environment import SpookyMansion
 
-num_states = 3
-num_actions = 2
-
-transition_matrix = np.array([[[0.7, 0.2, 0.1], [0.3, 0.6, 0.1]],
-                              [[0.2, 0.8, 0.0], [0.1, 0.1, 0.8]],
-                              [[0.0, 0.3, 0.7], [0.6, 0.3, 0.1]]])
-
-reward_matrix = np.array([[[1.0, 0.0, -1.0], [-1.0, 0.0, 1.0]],
-                          [[0.0, 1.0, 0.0], [-1.0, 0.0, 1.0]],
-                          [[0.0, -1.0, 1.0], [1.0, 0.0, -1.0]]])
-
-environment = SimpleEnvironment(num_states, num_actions, transition_matrix, reward_matrix)
-
-for _ in range(5):
-    action = np.random.randint(0, num_actions)
-    next_state, reward = environment.step(action)
-    print(f"Action: {action}, Next State: {next_state}, Reward: {reward}")
-
-environment.reset()
-print(f"After reset, Current State: {environment.get_state()}")
+env = SpookyMansion(size=4, ghost_probability=0.3, diamond_probability=0.2)
+print(env.mansion)
+print(env.step("right"))
+print(env.inspect())
+print(env.step("down"))
+print(env.step("left"))

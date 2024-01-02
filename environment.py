@@ -1,28 +1,67 @@
-import numpy as np
+import random
 
+class SpookyMansion:
+    def __init__(self, size=5, ghost_probability=0.2, diamond_probability=0.1, inspect_impact=0.5, punishment_severity=1.0):
+        self.size = size
+        self.ghost_probability = ghost_probability
+        self.diamond_probability = diamond_probability
+        self.inspect_impact = inspect_impact
+        self.punishment_severity = punishment_severity
 
-class SimpleEnvironment:
-    def __init__(self, num_states, num_actions, transition_matrix, reward_matrix):
-        self.num_states = num_states
-        self.num_actions = num_actions
-        self.transition_matrix = transition_matrix
-        self.reward_matrix = reward_matrix
-        self.current_state = np.random.randint(0, num_states)
+        # Initialize mansion layout
+        self.mansion = [[self._generate_room() for _ in range(size)] for _ in range(size)]
 
-    def reset(self):
-        self.current_state = np.random.randint(0, self.num_states)
+        # Initialize explorer's position
+        self.explorer_position = (0, 0)
+
+    def _generate_room(self):
+        # Generate a random room based on probabilities
+        if random.random() < self.ghost_probability:
+            return "ghost"
+        elif random.random() < self.diamond_probability:
+            return "diamond"
+        else:
+            return "empty"
 
     def step(self, action):
-        if action < 0 or action >= self.num_actions:
-            raise ValueError("Invalid Action")
+        # Implement explorer's movement logic
+        if action == "left" and self.explorer_position[1] > 0:
+            self.explorer_position = (self.explorer_position[0], self.explorer_position[1] - 1)
+        elif action == "right" and self.explorer_position[1] < self.size - 1:
+            self.explorer_position = (self.explorer_position[0], self.explorer_position[1] + 1)
+        elif action == "up" and self.explorer_position[0] > 0:
+            self.explorer_position = (self.explorer_position[0] - 1, self.explorer_position[1])
+        elif action == "down" and self.explorer_position[0] < self.size - 1:
+            self.explorer_position = (self.explorer_position[0] + 1, self.explorer_position[1])
 
-        transition_probs = self.transition_matrix[self.current_state, action, :]
-        next_state = np.random.choice(np.arange(self.num_states), p=transition_probs)
-        reward = self.reward_matrix[self.current_state, action, next_state]
+        # Determine the room type
+        current_room = self.mansion[self.explorer_position[0]][self.explorer_position[1]]
 
-        self.current_state = next_state
+        # Implement rewards and punishments
+        if current_room == "ghost":
+            punishment = int(self.punishment_severity * self._gather_diamonds())
+            return -punishment
+        elif current_room == "diamond":
+            return 1
+        else:
+            return 0
 
-        return next_state, reward
+    def inspect(self):
+        # Implement the impact of the "inspect" action
+        current_room = self.mansion[self.explorer_position[0]][self.explorer_position[1]]
+        if current_room == "ghost":
+            return -self.inspect_impact
+        elif current_room == "diamond":
+            return self.inspect_impact
+        else:
+            return 0
 
-    def get_state(self):
-        return self.current_state
+    def _gather_diamonds(self):
+        # Helper function to calculate the total gathered diamonds
+        return sum(row.count("diamond") for row in self.mansion)
+
+    def reset(self):
+        # Reset the environment for a new episode
+        self.explorer_position = (0, 0)
+        self.mansion = [[self._generate_room() for _ in range(self.size)] for _ in range(self.size)]
+        return self.explorer_position
