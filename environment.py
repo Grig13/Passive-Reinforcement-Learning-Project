@@ -40,11 +40,11 @@ class SpookyMansion:
         # Implement rewards and punishments
         if current_room == "ghost":
             punishment = int(self.punishment_severity * self._gather_diamonds())
-            return -punishment
+            return self.explorer_position, -punishment, True
         elif current_room == "diamond":
-            return 1
+            return self.explorer_position, 1, True
         else:
-            return 0
+            return self.explorer_position, 0, False
 
     def inspect(self):
         # Implement the impact of the "inspect" action
@@ -65,3 +65,25 @@ class SpookyMansion:
         self.explorer_position = (0, 0)
         self.mansion = [[self._generate_room() for _ in range(self.size)] for _ in range(self.size)]
         return self.explorer_position
+
+    def generate_dataset(self, num_episodes):
+        dataset = []
+
+        for _ in range(num_episodes):
+            state = self.reset()
+            done = False
+
+            while not done:
+                action = random.choice(["left", "right", "up", "down", "inspect"])
+                next_state, reward, done = self.step(action)
+                dataset.append((state, action, reward, next_state, done))
+                state = next_state
+
+        return dataset
+
+    def _take_action(self, action):
+        if action == "inspect":
+            reward = self.inspect()
+        else:
+            reward = self.step(action)
+        return self.explorer_position, reward
