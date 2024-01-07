@@ -1,28 +1,26 @@
 import numpy as np
 
 class QLearningAgent:
-    def __init__(self, num_actions, learning_rate=0.1, discount_factor=0.9):
+    def __init__(self, num_actions, exploration_prob=0.1, learning_rate=0.1):
         self.num_actions = num_actions
-        self.learning_rate = learning_rate
-        self.discount_factor = discount_factor
         self.q_values = {}
+        self.exploration_prob = exploration_prob
+        self.learning_rate = learning_rate
+
+    def get_q_values(self, state):
+        return self.q_values.get(state, [0] * self.num_actions)
 
     def choose_action(self, state):
-        if state not in self.q_values:
-            self.q_values[state] = np.zeros(self.num_actions)
-        return np.argmax(self.q_values[state])
+        if np.random.rand() < self.exploration_prob:
+            return np.random.choice(self.num_actions)
+        else:
+            q_values = self.get_q_values(state)
+            return np.argmax(q_values)
 
     def learn_from_dataset(self, dataset):
         for state, action, reward, next_state, done in dataset:
-            if state not in self.q_values:
-                self.q_values[state] = np.zeros(self.num_actions)
-            if next_state not in self.q_values:
-                self.q_values[next_state] = np.zeros(self.num_actions)
+            current_q_values = self.get_q_values(state)
+            next_q_values = self.get_q_values(next_state)
+            target = reward + (0 if done else np.max(next_q_values))
+            current_q_values[action] = (1 - self.learning_rate) * current_q_values[action] + self.learning_rate * target
 
-            best_next_action = np.argmax(self.q_values[next_state])
-            td_target = reward + self.discount_factor * self.q_values[next_state][best_next_action]
-            td_error = td_target - self.q_values[state][action]
-            self.q_values[state][action] += self.learning_rate * td_error
-
-    def get_q_values(self):
-        return self.q_values

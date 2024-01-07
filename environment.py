@@ -8,14 +8,14 @@ class SpookyMansion:
         self.inspect_impact = inspect_impact
         self.punishment_severity = punishment_severity
 
-        # Initialize mansion layout
         self.mansion = [[self._generate_room() for _ in range(size)] for _ in range(size)]
 
-        # Initialize explorer's position
         self.explorer_position = (0, 0)
 
+    def get_state_key(self, state):
+        return f"state_{state[0]}_{state[1]}"
+
     def _generate_room(self):
-        # Generate a random room based on probabilities
         if random.random() < self.ghost_probability:
             return "ghost"
         elif random.random() < self.diamond_probability:
@@ -24,7 +24,6 @@ class SpookyMansion:
             return "empty"
 
     def step(self, action):
-        # Implement explorer's movement logic
         if action == "left" and self.explorer_position[1] > 0:
             self.explorer_position = (self.explorer_position[0], self.explorer_position[1] - 1)
         elif action == "right" and self.explorer_position[1] < self.size - 1:
@@ -34,10 +33,8 @@ class SpookyMansion:
         elif action == "down" and self.explorer_position[0] < self.size - 1:
             self.explorer_position = (self.explorer_position[0] + 1, self.explorer_position[1])
 
-        # Determine the room type
         current_room = self.mansion[self.explorer_position[0]][self.explorer_position[1]]
 
-        # Implement rewards and punishments
         if current_room == "ghost":
             punishment = int(self.punishment_severity * self._gather_diamonds())
             return self.explorer_position, -punishment, True
@@ -47,7 +44,6 @@ class SpookyMansion:
             return self.explorer_position, 0, False
 
     def inspect(self):
-        # Implement the impact of the "inspect" action
         current_room = self.mansion[self.explorer_position[0]][self.explorer_position[1]]
         if current_room == "ghost":
             return -self.inspect_impact
@@ -57,27 +53,27 @@ class SpookyMansion:
             return 0
 
     def _gather_diamonds(self):
-        # Helper function to calculate the total gathered diamonds
         return sum(row.count("diamond") for row in self.mansion)
 
     def reset(self):
-        # Reset the environment for a new episode
         self.explorer_position = (0, 0)
         self.mansion = [[self._generate_room() for _ in range(self.size)] for _ in range(self.size)]
         return self.explorer_position
 
-    def generate_dataset(self, num_episodes):
+    def generate_dataset(self, num_episodes, max_steps=100):
         dataset = []
 
         for _ in range(num_episodes):
             state = self.reset()
             done = False
+            steps = 0
 
-            while not done:
+            while not done and steps < max_steps:
                 action = random.choice(["left", "right", "up", "down", "inspect"])
                 next_state, reward, done = self.step(action)
                 dataset.append((state, action, reward, next_state, done))
                 state = next_state
+                steps += 1
 
         return dataset
 
